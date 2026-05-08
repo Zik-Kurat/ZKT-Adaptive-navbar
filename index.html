@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            font-size: 1.2em;
+            box-sizing: border-box;
+        }
+
+        .navbar {
+            display: flex;
+            overflow: hidden;
+        }
+        .navbar__item {
+            flex-grow: 1;
+            border: 1px solid black;
+        }
+
+        .item {
+            border: 1px solid black;
+            background: yellow;
+            white-space: nowrap;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 0px 20px 5px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar__item">
+            <div class="item">
+                Товары
+            </div>
+        </div>
+        <div class="navbar__item">
+            <div class="item">
+                Услуги
+            </div>
+        </div>
+        <div class="navbar__item">
+            <div class="item">
+                Обратная связь
+            </div>
+        </div>
+        <div class="navbar__item">
+            <div class="item">
+                Документы
+            </div>
+        </div>
+    </nav>
+    
+</body>
+</html>
