@@ -27,7 +27,6 @@
             padding: 0px 20px 5px;
             text-align: center;
         }
-
     </style>
 </head>
 <body>
@@ -55,5 +54,94 @@
         </div>
     </nav>
     
+    <style>
+        .zk__hidden {
+            display: none;
+        }
+    </style>
+    
+    <script>
+        const hiddenSelector = 'zk__hidden';
+
+        let navbar = document.querySelector('.navbar');
+        let minWidths = new Map();
+        let visibleItemsStack = Array.from(navbar.children);
+        let hiddenItemsStack = [];
+
+        let observer = new ResizeObserver((entries) => {
+            let navbarEntries = entries[0];
+            let navbarWidth = navbar.getClientRects()[0].width;
+            
+            // Получение общей ширены итемов без класса скрытости
+            let itemsWidth = 0;
+            for (const item of visibleItemsStack) {
+                let width = item.getClientRects()[0].width;
+                itemsWidth += width;
+            }
+
+            // Запоминание минимальных размеров итемов
+            if (
+                navbarWidth < itemsWidth &&
+                minWidths.size === 0
+            ) {
+                for (const item of visibleItemsStack) {
+                    let width = item.getClientRects()[0].width;
+                    
+                    minWidths.set(item, width);
+                }
+            }
+        
+            // Получение минимальной длины итемов без класса скрытости
+            let minItemsWidth = 0;
+            for (const item of visibleItemsStack) {
+                minItemsWidth += minWidths.get(item);
+            }
+
+            // Добавляем, либо снимаем класс скрытости
+            if (navbarWidth < itemsWidth) {
+                // Добавлять класс скрытости для выпадающих
+                do {
+                    // Берём из стака видимых итем
+                    // Назначаем ему класс скрытости
+                    // И кладём в стак скрытых
+
+                    if (visibleItemsStack.length === 0) break;
+                    let item = visibleItemsStack.pop();
+                    let width = item.getClientRects()[0].width;
+
+                    item.classList.add(hiddenSelector);
+                    hiddenItemsStack.push(item);
+                    itemsWidth -= width;
+                } while (navbarWidth < itemsWidth)
+            }
+            else {
+                // Убирать класс скрытьсти с тех, кого можно вернуть в видимые
+                while (true) {
+                    // Берём из стака скрытых итем
+                    // Проверяем его на возможность вернуть в видимые
+                    // Снимаем класс скрытости и кладём в стак видимых
+
+                    if (hiddenItemsStack.length === 0) break;
+                    let item = hiddenItemsStack.pop();
+                    let minWidth = minWidths.get(item);
+
+                    minItemsWidth += minWidth;
+                    if (
+                        navbarWidth < minItemsWidth
+                    ) {
+                        hiddenItemsStack.push(item);
+                        break;
+                    }
+
+                    item.classList.remove(hiddenSelector);
+                    visibleItemsStack.push(item);
+                }
+            }
+
+        });
+        observer.observe(navbar);
+
+    </script>
+
 </body>
 </html>
