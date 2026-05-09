@@ -72,7 +72,7 @@
             let navbarEntries = entries[0];
             let navbarWidth = navbar.getClientRects()[0].width;
             
-            // Получение общей ширены итемов без класса скрытости
+            // Получение общей акруальной ширены итемов без класса скрытости
             let itemsWidth = 0;
             for (const item of visibleItemsStack) {
                 let width = item.getClientRects()[0].width;
@@ -89,12 +89,6 @@
                     
                     minWidths.set(item, width);
                 }
-            }
-        
-            // Получение минимальной длины итемов без класса скрытости
-            let minItemsWidth = 0;
-            for (const item of visibleItemsStack) {
-                minItemsWidth += minWidths.get(item);
             }
 
             // Добавляем, либо снимаем класс скрытости
@@ -115,6 +109,12 @@
                 } while (navbarWidth < itemsWidth)
             }
             else {
+                // Получение минимальной длины итемов без класса скрытости
+                let minItemsWidth = 0;
+                for (const item of visibleItemsStack) {
+                    minItemsWidth += minWidths.get(item);
+                }
+
                 // Убирать класс скрытьсти с тех, кого можно вернуть в видимые
                 while (true) {
                     // Берём из стака скрытых итем
