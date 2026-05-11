@@ -4,66 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <style>
-        * {
-            font-size: 1.2em;
-            box-sizing: border-box;
-        }
-
-        .navbar {
-            display: flex;
-            overflow: hidden;
-        }
-        .navbar__item {
-            flex-grow: 1;
-            border: 1px solid black;
-        }
-
-        .item {
-            border: 1px solid black;
-            background: yellow;
-            white-space: nowrap;
-            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            padding: 0px 20px 5px;
-            text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" href="zk_base_style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    
+    <nav class="navbar ZKB_container">
+        <div class="navbar__wrapper ZKB_container__wrapper">
 
-    <nav class="navbar">
-        <div class="navbar__item">
-            <div class="item">
-                Товары
+            <div class="logo">
+                Zikkurat
             </div>
-        </div>
-        <div class="navbar__item">
-            <div class="item">
-                Услуги
+            <div class="items">
+                <div class="items__item">
+                    Товары
+                </div>
+                <div class="items__item">
+                    Услуги
+                </div>
+                <div class="items__item">
+                    Обратная связь
+                </div>
+                <div class="items__item">
+                    Документы
+                </div>
             </div>
-        </div>
-        <div class="navbar__item">
-            <div class="item">
-                Обратная связь
+            <div class="burger">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-menu-2"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M21 6a1 1 0 0 1 -1 1h-16a1 1 0 1 1 0 -2h16a1 1 0 0 1 1 1" /><path d="M21 12a1 1 0 0 1 -1 1h-16a1 1 0 0 1 0 -2h16a1 1 0 0 1 1 1" /><path d="M21 18a1 1 0 0 1 -1 1h-16a1 1 0 0 1 0 -2h16a1 1 0 0 1 1 1" /></svg>
             </div>
-        </div>
-        <div class="navbar__item">
-            <div class="item">
-                Документы
-            </div>
+
         </div>
     </nav>
     
-    <style>
-        .zk__hidden {
-            display: none;
-        }
-    </style>
+    <div class="ZKB_modal" style="display: none;">
+
+        <div class="navbar_modal ZKB_container ZKB_container--full_screen">
+            <div class="ZKB_container__wrapper">
+
+                <div class="navbar_modal__wrapper">
+                    <div class="exit">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
+                    </div>
+                    <div class="items">
+                        <div class="items__item">
+                            Товары
+                        </div>
+                        <div class="items__item">
+                            Услуги
+                        </div>
+                        <div class="items__item">
+                            Обратная связь
+                        </div>
+                        <div class="items__item">
+                            Документы
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
     
     <script>
-        const hiddenSelector = 'zk__hidden';
+        const navBarSelector = '.navbar .items';
+        const hiddenSelector = 'items__item--hidden';
 
-        let navbar = document.querySelector('.navbar');
+        let navbar = document.querySelector(navBarSelector);
         let minWidths = new Map();
         let visibleItemsStack = Array.from(navbar.children);
         let hiddenItemsStack = [];

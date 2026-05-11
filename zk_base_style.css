@@ -1,0 +1,64 @@
+:root {
+    --px: calc(1rem / 16);
+    /*
+    Установка значений:
+    calc(16 * var(--px))
+    */
+
+    --min-width: calc(300 * var(--px));
+    --min-height: calc(480 * var(--px));
+
+    --max-width: calc(1440 * var(--px));
+    --max-height: calc(1440 * var(--px));
+}
+* {
+    box-sizing: border-box;
+    margin: 0;
+}
+html {
+    overflow: hidden;
+}
+body {
+    width: 100vw;
+    height: 100vh;
+
+    overflow: auto;
+}
+
+/* --------------------------------------------------------------------- */
+
+.ZKB_modal {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+
+    overflow: auto;
+}
+
+/* --------------------------------------------------------------------- */
+
+.ZKB_container {
+    min-width: var(--min-width);
+}
+.ZKB_container__wrapper {
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.ZKB_container--full_screen {
+    height: 100vh;
+    min-height: var(--min-height);
+}
+.ZKB_container--full_screen > .ZKB_container__wrapper {
+    max-width: unset;
+    height: 100%
+}
+
+.ZKB_container--low_full_screen {
+    height: 100vh;
+    min-height: var(--min-height);
+    max-height: var(--max-height);
+}
+.ZKB_container--low_full_screen > .ZKB_container__wrapper {
+    height: 100%
+}
