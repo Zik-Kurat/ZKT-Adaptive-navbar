@@ -76,19 +76,25 @@
 }
 .navbar__wrapper {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     padding: calc(4 * var(--px));
 }
 .navbar .logo {
-    flex-grow: 1;
-    flex-shrink: 0;
     margin-left: calc(5 * var(--px));
     margin-right: calc(100 * var(--px));
 }
+.navbar__menu {
+    flex-basis: calc(750 * var(--px));
+    display: flex;
+
+    overflow: hidden;
+}
+
 .navbar .items {
+    flex-grow: 1;
     display: flex;
     align-items: center;
-    flex-grow: 1;
     max-width: calc(750 * var(--px));
 
     overflow: hidden;
@@ -103,6 +109,8 @@
     flex-grow: 0;
     flex-shrink: 0;
 }
+
+/* --------------------------------------------------------------------- */
 
 .navbar_modal {
     background: #00000099;
