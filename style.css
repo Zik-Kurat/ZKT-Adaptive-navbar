@@ -112,14 +112,18 @@
 
 /* --------------------------------------------------------------------- */
 
-.navbar_modal {
+.navbar_modal > div {
     background: #00000099;
 }
-.navbar_modal > div {
+.navbar_modal > div > div {
+    cursor: pointer;
+
     display: flex;
     justify-content: flex-end;
 }
 .navbar_modal__wrapper {
+    cursor: auto;
+
     flex-basis: calc(250 * var(--px));;
     padding: calc(2 * var(--px));
     padding-bottom: 0;
@@ -130,4 +134,8 @@
 .navbar_modal .exit,
 .navbar_modal .items__item {
     margin-bottom: calc(2 * var(--px));
+}
+
+.navbar_modal--hidden {
+    display: none;
 }

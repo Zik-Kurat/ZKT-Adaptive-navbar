@@ -40,9 +40,9 @@
         </div>
     </nav>
     
-    <div class="ZKB_modal" style="display: none;">
+    <div class="navbar_modal navbar_modal--hidden ZKB_modal">
 
-        <div class="navbar_modal ZKB_container ZKB_container--full_screen">
+        <div class="ZKB_container ZKB_container--full_screen">
             <div class="ZKB_container__wrapper">
 
                 <div class="navbar_modal__wrapper">
@@ -69,6 +69,36 @@
         </div>
 
     </div>
+    <!-- Скрипт открытия/закрытия навбара -->
+    <script>
+        (()=>{
+            const burger = document.querySelector('.navbar .burger');
+            const exit   = document.querySelector('.navbar_modal .exit');
+            const exitArea = document.querySelector('.navbar_modal .ZKB_container__wrapper');
+
+            const modal = document.querySelector('.navbar_modal');
+            const hiddenClass = 'navbar_modal--hidden';
+
+            burger.addEventListener('click', event => {
+
+                modal.classList.remove(hiddenClass);
+
+            });
+            exit.addEventListener('click', event => {
+
+                modal.classList.add(hiddenClass);
+
+            });
+            exitArea.addEventListener('click', event => {
+                if (event.target !== exitArea) return;
+
+                modal.classList.add(hiddenClass);
+
+            });
+
+        })();
+    </script>
+
     
     <script>
         const navBarSelector = '.navbar .items';
