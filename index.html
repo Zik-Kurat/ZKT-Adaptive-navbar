@@ -99,15 +99,22 @@
         })();
     </script>
 
-    
+    <!-- Скрипт адаптивного навбара -->
     <script>
-        const navBarSelector = '.navbar .items';
-        const hiddenSelector = 'items__item--hidden';
+        const navbar      = document.querySelector('.navbar .items');
+        const modalNavbar = document.querySelector('.navbar_modal .items');
+        const hiddenClass = 'items__item--hidden';
 
-        let navbar = document.querySelector(navBarSelector);
         let minWidths = new Map();
         let visibleItemsStack = Array.from(navbar.children);
         let hiddenItemsStack = [];
+
+        // Инициализация элементов модального навбара
+        let modalVisibleItemsStack = [];
+        let modalHiddenItemsStack = Array.from(modalNavbar.children);
+        for (const item of modalHiddenItemsStack) {
+                    item.classList.add(hiddenClass);
+        }
 
         let observer = new ResizeObserver((entries) => {
             let navbarEntries = entries[0];
@@ -134,7 +141,8 @@
 
             // Добавляем, либо снимаем класс скрытости
             if (navbarWidth < itemsWidth) {
-                // Добавлять класс скрытости для выпадающих
+                // Добавлять класс скрытости для выпадающих за границы
+                // + обратная операция для модальных элементов
                 do {
                     // Берём из стака видимых итем
                     // Назначаем ему класс скрытости
@@ -144,9 +152,13 @@
                     let item = visibleItemsStack.pop();
                     let width = item.getClientRects()[0].width;
 
-                    item.classList.add(hiddenSelector);
+                    item.classList.add(hiddenClass);
                     hiddenItemsStack.push(item);
                     itemsWidth -= width;
+
+                    let modalItem = modalHiddenItemsStack.pop();
+                    modalItem.classList.remove(hiddenClass);
+                    modalVisibleItemsStack.push(modalItem);
                 } while (navbarWidth < itemsWidth)
             }
             else {
@@ -157,6 +169,7 @@
                 }
 
                 // Убирать класс скрытьсти с тех, кого можно вернуть в видимые
+                // + обратная операция для модальных элементов
                 while (true) {
                     // Берём из стака скрытых итем
                     // Проверяем его на возможность вернуть в видимые
@@ -174,8 +187,12 @@
                         break;
                     }
 
-                    item.classList.remove(hiddenSelector);
+                    item.classList.remove(hiddenClass);
                     visibleItemsStack.push(item);
+
+                    let modalItem = modalVisibleItemsStack.pop();
+                    modalItem.classList.add(hiddenClass);
+                    modalHiddenItemsStack.push(modalItem);
                 }
             }
 
