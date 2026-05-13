@@ -130,6 +130,7 @@
                     itemsWidth += width;
                 }
 
+                if (visibleItemsStack.length === 1) return;
                 gap = (contentWidth - itemsWidth) / (visibleItemsStack.length - 1);
             }
 
