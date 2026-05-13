@@ -40,6 +40,9 @@
     border: calc(2 * var(--px)) solid black;
     background: orange;
 }
+.burger--hidden {
+    display: none;
+}
 .burger svg {
     height: calc(20 * var(--px));
 }

@@ -87,19 +87,27 @@
     <!-- Скрипт адаптивного навбара -->
     <script>
         (()=>{
-            const navbar      = document.querySelector('.navbar .items');
-            const modalNavbar = document.querySelector('.navbar_modal .items');
-            const hiddenClass = 'items__item--hidden';
-            
+            const itemsWrapper      = document.querySelector('.navbar .items');
+            const modalItemsWrapper = document.querySelector('.navbar_modal .items');
+            const hiddenItemClass  = 'items__item--hidden';
+
+            const modal             = document.querySelector('.navbar_modal');
+            const burger            = document.querySelector('.navbar .burger');
+            const hiddenModalClass  = 'navbar_modal--hidden';
+            const hiddenBurgerClass = 'burger--hidden';
+
             // Стеки навбара.
-            let visibleItemsStack = Array.from(navbar.children);
-            let hiddenItemsStack = [];
+            let visibleItemsStack = Array.from(itemsWrapper.children);
+            let hiddenItemsStack  = [];
             // Стеки модального навбара.
             let modalVisibleItemsStack = [];
-            let modalHiddenItemsStack = Array.from(modalNavbar.children);
+            let modalHiddenItemsStack  = Array.from(modalItemsWrapper.children);
+
+            // Прячим всё что нужно спрятать.
             for (const item of modalHiddenItemsStack) {
-                item.classList.add(hiddenClass);
+                item.classList.add(hiddenItemClass);
             }
+            burger.classList.add(hiddenBurgerClass);
 
             // Минимальные ширины и гэп.
             // Будут инициализированны в процессе.
@@ -114,18 +122,20 @@
                     );
                 }
 
+                let itemsWidth = 0;
                 for (const item of visibleItemsStack) {
                     let width = item.getBoundingClientRect().width;
                     
                     minWidths.set(item, width);
-                    contentWidth -= width;
+                    itemsWidth += width;
                 }
-                gap = contentWidth / (visibleItemsStack.length - 1);
+
+                gap = (contentWidth - itemsWidth) / (visibleItemsStack.length - 1);
             }
 
             // Проверка на переполнение.
             function isOverflow() {
-                let navbarWidth = navbar.getBoundingClientRect().width;
+                let wrapperWidth = itemsWrapper.getBoundingClientRect().width;
                 let contentWidth = 0;
                 if (visibleItemsStack.length !== 0) {
                     contentWidth = (
@@ -135,13 +145,13 @@
                 }
 
                 return (
-                    navbarWidth < contentWidth &&
-                    Math.abs(navbarWidth - contentWidth) > 0.001
+                    wrapperWidth < contentWidth &&
+                    Math.abs(wrapperWidth - contentWidth) > 0.001
                 );
             }
 
             // Проверка возможности сделать видимым один итем.
-            function canVisible() {
+            function canShow() {
                 // Првоерка на наличие скрытых.
                 if (hiddenItemsStack.length === 0) return false;
                 let lastHidden = hiddenItemsStack.at(-1);
@@ -153,60 +163,80 @@
                 }
                 minItemsWidth += minWidths.get(lastHidden);
 
-                let navbarWidth = navbar.getBoundingClientRect().width;
-                return navbarWidth >= minItemsWidth;
+                let wrapperWidth = itemsWrapper.getBoundingClientRect().width;
+                return wrapperWidth >= minItemsWidth;
+            }
+
+            // Срабатывает, когда нужно скрыть итем.
+            function hide() {
+                // Если произашло переполнение, скрываем один итем из навбара
+                // и проявляем один итем из модального навбара.
+                do {
+                    if (visibleItemsStack.length === 0) break;
+                    // Берём из стака видимых итем;
+                    // Назначаем ему класс скрытости;
+                    // Кладём в стак скрытых.
+                    let item = visibleItemsStack.pop();
+                    item.classList.add(hiddenItemClass);
+                    hiddenItemsStack.push(item);
+
+                    if (modalHiddenItemsStack.length === 0) break;
+                    // Берём из стака невидимый итем модальки;
+                    // Снимаем с него класс скрытости;
+                    // Кладём в стак видимых.
+                    let modalItem = modalHiddenItemsStack.pop();
+                    modalItem.classList.remove(hiddenItemClass);
+                    modalVisibleItemsStack.push(modalItem);
+                } while (isOverflow());
+
+                // Показать бургер, если есть скрытые итемы.
+                if (hiddenItemsStack.length !== 0)
+                    burger.classList.remove(hiddenBurgerClass);
+            }
+
+            // Срабатывает, когда нужно показать итем.
+            function show() {
+                // Если есть возможность, делаем видимым скрытый итем
+                // и скрываем один итем из модального навбара.
+                while (canShow()) {
+                    // Берём из стака невидимый итем;
+                    // Снимаем с него класс скрытости;
+                    // Кладём в стак видимы.
+                    let item = hiddenItemsStack.pop();
+                    item.classList.remove(hiddenItemClass);
+                    visibleItemsStack.push(item);
+
+                    if (modalVisibleItemsStack.length === 0) break;
+                    // Берём из стака видимых итем модальки;
+                    // Назначаем ему класс скрытости;
+                    // Кладём в стак скрытых.
+                    let modalItem = modalVisibleItemsStack.pop();
+                    modalItem.classList.add(hiddenItemClass);
+                    modalHiddenItemsStack.push(modalItem);
+                }
+
+                // Скрыть бургер, если скрытых итемов нет.
+                // Закрыть модальное окно.
+                if (hiddenItemsStack.length !== 0) return;
+                burger.classList.add(hiddenBurgerClass);
+                modal.classList.add(hiddenModalClass);
             }
 
             let observer = new ResizeObserver(() => {
                 // Добавляем, либо снимаем класс скрытости.
-                if (isOverflow()) (()=>{
+                if (isOverflow()) {
                     // Инициализация минимальных ширин и гэпа.
                     // Инициация происходит в момент, когда итемы
                     // имеют наименьший размер.
                     if (minWidths.size === 0) initMinWidthAndGap();
 
-                    // Если произашло переполнение, скрываем один итем из навбара
-                    // и проявляем один итем из модального навбара.
-                    do {
-                        if (visibleItemsStack.length === 0) return;
-                        // Берём из стака видимых итем;
-                        // Назначаем ему класс скрытости;
-                        // Кладём в стак скрытых.
-                        let item = visibleItemsStack.pop();
-                        item.classList.add(hiddenClass);
-                        hiddenItemsStack.push(item);
-
-                        if (modalHiddenItemsStack.length === 0) return;
-                        // Берём из стака невидимый итем модальки;
-                        // Снимаем с него класс скрытости;
-                        // Кладём в стак видимых.
-                        let modalItem = modalHiddenItemsStack.pop();
-                        modalItem.classList.remove(hiddenClass);
-                        modalVisibleItemsStack.push(modalItem);
-                    } while (isOverflow());
-                })()
-                else (()=>{
-                    // Если есть возможность, делаем видимым скрытый итем
-                    // и скрываем один итем из модального навбара.
-                    while (canVisible()) {
-                        // Берём из стака невидимый итем;
-                        // Снимаем с него класс скрытости;
-                        // Кладём в стак видимы.
-                        let item = hiddenItemsStack.pop();
-                        item.classList.remove(hiddenClass);
-                        visibleItemsStack.push(item);
-
-                        if (modalVisibleItemsStack.length === 0) return;
-                        // Берём из стака видимых итем модальки;
-                        // Назначаем ему класс скрытости;
-                        // Кладём в стак скрытых.
-                        let modalItem = modalVisibleItemsStack.pop();
-                        modalItem.classList.add(hiddenClass);
-                        modalHiddenItemsStack.push(modalItem);
-                    }
-                })();
+                    hide();
+                }
+                else {
+                    show();
+                };
             });
-            observer.observe(navbar);
+            observer.observe(itemsWrapper);
         })();
     </script>
 
