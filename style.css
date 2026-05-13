@@ -126,7 +126,7 @@
     justify-content: flex-end;
 }
 .navbar_modal__wrapper {
-    cursor: auto;
+    cursor: default;
 
     flex-basis: calc(250 * var(--px));;
     padding: calc(2 * var(--px));
