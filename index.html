@@ -190,8 +190,8 @@
                 } while (isOverflow());
 
                 // Показать бургер, если есть скрытые итемы.
-                if (hiddenItemsStack.length !== 0)
-                    burger.classList.remove(hiddenBurgerClass);
+                if (hiddenItemsStack.length === 0) return;
+                burger.classList.remove(hiddenBurgerClass);
             }
 
             // Срабатывает, когда нужно показать итем.
