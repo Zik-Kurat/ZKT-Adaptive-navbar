@@ -87,14 +87,59 @@
     <!-- Скрипт адаптивного навбара -->
     <script>
         (()=>{
-            const itemsWrapper      = document.querySelector('.navbar .items');
-            const modalItemsWrapper = document.querySelector('.navbar_modal .items');
-            const hiddenItemClass  = 'items__item--hidden';
+            // Спизженный из интернетов декоратор для троттлинга.
+            // Немного модификирован для асинхронных функций.
+            function throttle(func, delay) {
+                let isThrottled = false;
+                let savedArgs = null;
+                let savedThis = null;
 
-            const modal             = document.querySelector('.navbar_modal');
+                return async function wrapper(...args) {
+                    if (isThrottled) {
+                        savedArgs = args;
+                        savedThis = this;
+                        return;
+                    }
+                    isThrottled = true;
+
+                    await func.apply(this, args);
+
+                    setTimeout(()=>{
+                        isThrottled = false;
+
+                        if (!savedArgs) return;
+                        wrapper.apply(savedThis, savedArgs);
+                        savedArgs = null;
+                        savedThis = null;
+                    }, delay);
+                };
+            }
+
+            const MAX_TIME = 500;
+            async function playAnimation(element, animClass) {
+                if (element.clientWidth === 0) return;
+
+                element.classList.add(animClass);
+                await Promise.race([
+                     new Promise(res => {
+                        element.addEventListener('animationend', ()=>{
+                            res();
+                        }, { once: true });
+                    }),
+                    new Promise(res => {
+                        setTimeout(res, MAX_TIME)
+                    }),
+                ]);
+                element.classList.remove(animClass);
+            }
+
+            // ---------------------------------------------------------------------
+
+            const itemsWrapper      = document.querySelector('.navbar .items');
             const burger            = document.querySelector('.navbar .burger');
-            const hiddenModalClass  = 'navbar_modal--hidden';
-            const hiddenBurgerClass = 'burger--hidden';
+
+            const modalItemsWrapper = document.querySelector('.navbar_modal .items');
+            const modal             = document.querySelector('.navbar_modal');
 
             // Стеки навбара.
             let visibleItemsStack = Array.from(itemsWrapper.children);
@@ -105,138 +150,98 @@
 
             // Прячим всё что нужно спрятать.
             for (const item of modalHiddenItemsStack) {
-                item.classList.add(hiddenItemClass);
+                item.classList.add('items__item--hidden');
             }
-            burger.classList.add(hiddenBurgerClass);
-
-            // Минимальные ширины и гэп.
-            // Будут инициализированны в процессе.
-            let minWidths = new Map();
-            let gap = 0;
-            function initMinWidthAndGap() {
-                let contentWidth = 0;
-                if (visibleItemsStack.length !== 0) {
-                    contentWidth = (
-                        visibleItemsStack.at(-1).getBoundingClientRect().right -
-                        visibleItemsStack.at(0).getBoundingClientRect().left
-                    );
-                }
-
-                let itemsWidth = 0;
-                for (const item of visibleItemsStack) {
-                    let width = item.getBoundingClientRect().width;
-                    
-                    minWidths.set(item, width);
-                    itemsWidth += width;
-                }
-
-                if (visibleItemsStack.length === 1) return;
-                gap = (contentWidth - itemsWidth) / (visibleItemsStack.length - 1);
-            }
-
-            // Проверка на переполнение.
-            function isOverflow() {
-                let wrapperWidth = itemsWrapper.getBoundingClientRect().width;
-                let contentWidth = 0;
-                if (visibleItemsStack.length !== 0) {
-                    contentWidth = (
-                        visibleItemsStack.at(-1).getBoundingClientRect().right -
-                        visibleItemsStack.at(0).getBoundingClientRect().left
-                    );
-                }
-
-                return (
-                    wrapperWidth < contentWidth &&
-                    Math.abs(wrapperWidth - contentWidth) > 0.001
-                );
-            }
-
-            // Проверка возможности сделать видимым один итем.
-            function canShow() {
-                // Првоерка на наличие скрытых.
-                if (hiddenItemsStack.length === 0) return false;
-                let lastHidden = hiddenItemsStack.at(-1);
-
-                // Проверка на вмещаемость скрытого.
-                let minItemsWidth = 0;
-                for (const item of visibleItemsStack) {
-                    minItemsWidth += (minWidths.get(item) + gap);
-                }
-                minItemsWidth += minWidths.get(lastHidden);
-
-                let wrapperWidth = itemsWrapper.getBoundingClientRect().width;
-                return wrapperWidth >= minItemsWidth;
-            }
+            burger.classList.add('burger--hidden');
 
             // Срабатывает, когда нужно скрыть итем.
-            function hide() {
-                // Если произашло переполнение, скрываем один итем из навбара
-                // и проявляем один итем из модального навбара.
-                do {
-                    if (visibleItemsStack.length === 0) break;
-                    // Берём из стака видимых итем;
-                    // Назначаем ему класс скрытости;
-                    // Кладём в стак скрытых.
-                    let item = visibleItemsStack.pop();
-                    item.classList.add(hiddenItemClass);
-                    hiddenItemsStack.push(item);
+            async function hide() {
+                // Показываем бургер (если надо),
+                // Прячем итем в основном навбаре,
+                // Показываем итем в модальном окне.
 
-                    if (modalHiddenItemsStack.length === 0) break;
-                    // Берём из стака невидимый итем модальки;
-                    // Снимаем с него класс скрытости;
-                    // Кладём в стак видимых.
-                    let modalItem = modalHiddenItemsStack.pop();
-                    modalItem.classList.remove(hiddenItemClass);
-                    modalVisibleItemsStack.push(modalItem);
-                } while (isOverflow());
+                let item      = visibleItemsStack.pop();
+                let modalItem = modalHiddenItemsStack.pop();
 
-                // Показать бургер, если есть скрытые итемы.
-                if (hiddenItemsStack.length === 0) return;
-                burger.classList.remove(hiddenBurgerClass);
+                modalItem.classList.remove('items__item--hidden');
+                await Promise.all([
+                    playAnimation(item, 'hide_animation'),
+                    playAnimation(modalItem, 'show_animation')
+                ]);
+                item.classList.add('items__item--hidden');
+
+                hiddenItemsStack.push(item);
+                modalVisibleItemsStack.push(modalItem);
+
+                if (hiddenItemsStack.length === 1) {
+                    burger.classList.remove('burger--hidden');
+                    await playAnimation(burger, 'show_animation');
+                }
             }
 
             // Срабатывает, когда нужно показать итем.
-            function show() {
-                // Если есть возможность, делаем видимым скрытый итем
-                // и скрываем один итем из модального навбара.
-                while (canShow()) {
-                    // Берём из стака невидимый итем;
-                    // Снимаем с него класс скрытости;
-                    // Кладём в стак видимы.
-                    let item = hiddenItemsStack.pop();
-                    item.classList.remove(hiddenItemClass);
-                    visibleItemsStack.push(item);
+            async function show() {
+                // Прячем бургер (если надо),
+                // Показываем итем в основном навбаре,
+                // Прячем итем в модальном окне.
 
-                    if (modalVisibleItemsStack.length === 0) break;
-                    // Берём из стака видимых итем модальки;
-                    // Назначаем ему класс скрытости;
-                    // Кладём в стак скрытых.
-                    let modalItem = modalVisibleItemsStack.pop();
-                    modalItem.classList.add(hiddenItemClass);
-                    modalHiddenItemsStack.push(modalItem);
+                if (hiddenItemsStack.length === 1) {
+                    await playAnimation(burger, 'hide_animation');
+                    burger.classList.add('burger--hidden');
                 }
 
-                // Скрыть бургер, если скрытых итемов нет.
-                // Закрыть модальное окно.
-                if (hiddenItemsStack.length !== 0) return;
-                burger.classList.add(hiddenBurgerClass);
-                modal.classList.add(hiddenModalClass);
+                let item = hiddenItemsStack.pop();
+                let modalItem = modalVisibleItemsStack.pop();
+
+                item.classList.remove('items__item--hidden');
+                await Promise.all([
+                    playAnimation(item, 'show_animation'),
+                    playAnimation(modalItem, 'hide_animation')
+                ]);
+                modalItem.classList.add('items__item--hidden');
+
+                visibleItemsStack.push(item);
+                modalHiddenItemsStack.push(modalItem);
             }
 
-            let observer = new ResizeObserver(() => {
-                // Добавляем, либо снимаем класс скрытости.
-                if (isOverflow()) {
-                    // Инициализация минимальных ширин и гэпа.
-                    // Инициация происходит в момент, когда итемы
-                    // имеют наименьший размер.
-                    if (minWidths.size === 0) initMinWidthAndGap();
+            // ---------------------------------------------------------------------
 
-                    hide();
+            // Мехинизм брейкпоинтов.
+            // Применяется так:
+            // Когда детектится переполнение, кладём в стек ширину контента (scrollWidth).
+            // Когда ширина навбара достигает или превосходит ширину из стека, считается,
+            // что можно показать спрятанный итем.
+            let breakpointsStack = [];
+            function pushBreakpoint() {
+                let contentWidth = itemsWrapper.scrollWidth;
+                breakpointsStack.push(contentWidth);
+            }
+            function popBreakpoint() {
+                breakpointsStack.pop();
+            }
+            
+            function isOverflow() {
+                return itemsWrapper.clientWidth < itemsWrapper.scrollWidth;
+            }
+            function isOverBreakpoint() {
+                if (breakpointsStack.length === 0) return false;
+
+                let breakpointWidth = breakpointsStack.at(-1);
+                let contentWidth = itemsWrapper.clientWidth;
+
+                return contentWidth > breakpointWidth;
+            }
+
+            let observer = new ResizeObserver(throttle(async () => {
+                while(isOverflow()) {
+                    pushBreakpoint();
+                    await hide();
                 }
-                else {
-                    show();
-                };
-            });
+                while(isOverBreakpoint()) {
+                    popBreakpoint();
+                    await show();
+                }
+            }, 250));
             observer.observe(itemsWrapper);
         })();
     </script>

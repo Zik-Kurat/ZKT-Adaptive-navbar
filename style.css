@@ -1,5 +1,6 @@
 * {
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* transition: all 0.5s; */
 }
 
 /* --------------------------------------------------------------------- */
@@ -65,6 +66,40 @@
 }
 .exit:hover {
     background: red;
+}
+
+.hide_animation {
+    animation: hide 0.25s;
+    animation-fill-mode: forwards;
+}
+.show_animation {
+    animation: show 0.25s;
+    animation-fill-mode: forwards;
+}
+@keyframes hide {
+    0% {
+        transform-origin: right;
+        transform: scaleX(1);
+        opacity: 1;
+    }
+    100% {
+        transform-origin: right;
+        transform: scaleX(0);
+        opacity: 0;
+        display: none;
+    }
+}
+@keyframes show {
+    0% {
+        transform-origin: right;
+        transform: scaleX(0);
+        opacity: 0;
+    }
+    100% {
+        transform-origin: right;
+        transform: scaleX(1);
+        opacity: 1;
+    }
 }
 
 /* --------------------------------------------------------------------- */
