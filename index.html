@@ -188,6 +188,7 @@
                 if (hiddenItemsStack.length === 1) {
                     await playAnimation(burger, 'hide_animation');
                     burger.classList.add('burger--hidden');
+                    modal.classList.add('navbar_modal--hidden');
                 }
 
                 let item = hiddenItemsStack.pop();
