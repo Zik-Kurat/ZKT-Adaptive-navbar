@@ -18,7 +18,7 @@
             <div class="navbar__menu">
 
                 <div class="items">
-                    <div class="items__item">Товары</div>
+                    <div class="items__item">Товары <textarea name="" id=""></textarea></div>
                     <div class="items__item">Услуги</div>
                     <div class="items__item">Обратная связь</div>
                     <div class="items__item">Документы</div>
@@ -87,6 +87,153 @@
     <!-- Скрипт адаптивного навбара -->
     <script>
         (()=>{
+            // Полезная функция для CSS-анимаций.
+            const MAX_TIME = 500;
+            async function playAnimation(element, animClass) {
+                if (element.clientWidth === 0) return;
+
+                element.classList.add(animClass);
+                await Promise.race([
+                     new Promise(res => {
+                        element.addEventListener('animationend', ()=>{
+                            res();
+                        }, { once: true });
+                    }),
+                    new Promise(res => {
+                        setTimeout(res, MAX_TIME)
+                    }),
+                ]);
+                element.classList.remove(animClass);
+            }
+
+            // ---------------------------------------------------------------------
+            // Использование скрипта adaptiveContainer.
+
+            const itemsWrapper      = document.querySelector('.navbar .items');
+            const burger            = document.querySelector('.navbar .burger');
+
+            const modalItemsWrapper = document.querySelector('.navbar_modal .items');
+            const modal             = document.querySelector('.navbar_modal');
+
+            // Стеки навбара.
+            let visibleItemsStack = Array.from(itemsWrapper.children);
+            let hiddenItemsStack  = [];
+            // Стеки модального навбара.
+            let modalVisibleItemsStack = [];
+            let modalHiddenItemsStack  = Array.from(modalItemsWrapper.children);
+
+            // Прячим всё что нужно спрятать.
+            for (const item of modalHiddenItemsStack) {
+                item.classList.add('items__item--hidden');
+            }
+            burger.classList.add('burger--hidden');
+
+            async function hide() {
+                // Показываем бургер (если надо),
+                // Прячем итем в основном навбаре,
+                // Показываем итем в модальном окне.
+
+                let item      = visibleItemsStack.pop();
+                let modalItem = modalHiddenItemsStack.pop();
+
+                modalItem.classList.remove('items__item--hidden');
+                await Promise.all([
+                    playAnimation(item, 'hide_animation'),
+                    playAnimation(modalItem, 'show_animation')
+                ]);
+                item.classList.add('items__item--hidden');
+
+                hiddenItemsStack.push(item);
+                modalVisibleItemsStack.push(modalItem);
+
+                if (hiddenItemsStack.length === 1) {
+                    burger.classList.remove('burger--hidden');
+                    await playAnimation(burger, 'show_animation');
+                }
+            }
+
+            async function show() {
+                // Прячем бургер (если надо),
+                // Показываем итем в основном навбаре,
+                // Прячем итем в модальном окне.
+
+                if (hiddenItemsStack.length === 1) {
+                    await playAnimation(burger, 'hide_animation');
+                    burger.classList.add('burger--hidden');
+                    modal.classList.add('navbar_modal--hidden');
+                }
+
+                let item      = hiddenItemsStack.pop();
+                let modalItem = modalVisibleItemsStack.pop();
+
+                item.classList.remove('items__item--hidden');
+                await Promise.all([
+                    playAnimation(item, 'show_animation'),
+                    playAnimation(modalItem, 'hide_animation')
+                ]);
+                modalItem.classList.add('items__item--hidden');
+
+                visibleItemsStack.push(item);
+                modalHiddenItemsStack.push(modalItem);
+            }
+
+            function getShowChange() {
+                let changeList = [];
+                if (hiddenItemsStack.length === 0) return changeList;
+
+                changeList.push({
+                    elem: hiddenItemsStack.at(-1),
+                    remove: [ 'items__item--hidden' ]
+                });
+
+                if (hiddenItemsStack.length === 1) {
+                    changeList.push({
+                        elem: burger,
+                        add: [ 'burger--hidden' ]
+                    });
+                }
+
+                return changeList;
+            }
+
+            initAdaptiveContainer(
+                itemsWrapper,
+                hide,
+                show,
+                getShowChange
+            );
+
+            // ---------------------------------------------------------------------
+            // Скрипт adaptiveContainer.
+            // Даёт возможность отслежить переполнение контейнера.
+            // Даёт возможность отслежить момент для возврата сокрытого контента.
+            // * Когда нужно скрыть переполняющий контейнер контент, вызывается
+            //   асинхронная функция hide() (получаемая от пользователя).
+            // * Когда свободного места достаточно для показа скрытого контента,
+            //   вызывается функция асинхронная show() (получаемая от пользователя).
+            // * Для проверки возможности показа скрытого контента используется функция
+            //   getShowChange() (получаемая от пользователя). Она возвращяет список изменений,
+            //   после полной отработки функции show().
+
+            // Принцип работы скрипта:
+            // * С определённой периодичностью (при ресайзе и/или по таймеру) вызывается обработчик.
+            // * Обработчик асинхронный. Пока полностью не завершит свою работу, не может быть вызван
+            //   снова.
+            // * Обработчик проверяет контейнер на переполнение. Если таковое есть, вызывается
+            //   функция hide().
+            // * Обработчик првоеряет контейнер на возможность вернуть контент. Если таковая есть,
+            //   вызывается функция show().
+
+            // Принцип проверки на наличие свободного места:
+            // * Для проверки наличия свободного места под скрытый контент, эмулируется его показ.
+            //   Функция getShowChange() возвращяет конечный списко изменений после работы show().
+            // * Данные изменения применяются к DOM-элементам, и сразу же производится проверка на
+            //   переполнение. Если переполнения нет, считается что есть возможность для вызова
+            //   функции show().
+            // * Применённые изменения откатываются, и даётся добро на вызов функции show().
+
+            
+
             // Спизженный из интернетов декоратор для троттлинга.
             // Немного модификирован для асинхронных функций.
             function throttle(func, delay) {
@@ -115,135 +262,55 @@
                 };
             }
 
-            const MAX_TIME = 500;
-            async function playAnimation(element, animClass) {
-                if (element.clientWidth === 0) return;
-
-                element.classList.add(animClass);
-                await Promise.race([
-                     new Promise(res => {
-                        element.addEventListener('animationend', ()=>{
-                            res();
-                        }, { once: true });
-                    }),
-                    new Promise(res => {
-                        setTimeout(res, MAX_TIME)
-                    }),
-                ]);
-                element.classList.remove(animClass);
+            function isOverflow(wrapper) {
+                return wrapper.clientWidth < wrapper.scrollWidth;
             }
+            function canShow(wrapper, changeFunc) {
+                const changeList = changeFunc();
+                if (changeList.length === 0) return false;
+                
+                for (const change of changeList) {
+                    let elem = change.elem;
 
-            // ---------------------------------------------------------------------
-
-            const itemsWrapper      = document.querySelector('.navbar .items');
-            const burger            = document.querySelector('.navbar .burger');
-
-            const modalItemsWrapper = document.querySelector('.navbar_modal .items');
-            const modal             = document.querySelector('.navbar_modal');
-
-            // Стеки навбара.
-            let visibleItemsStack = Array.from(itemsWrapper.children);
-            let hiddenItemsStack  = [];
-            // Стеки модального навбара.
-            let modalVisibleItemsStack = [];
-            let modalHiddenItemsStack  = Array.from(modalItemsWrapper.children);
-
-            // Прячим всё что нужно спрятать.
-            for (const item of modalHiddenItemsStack) {
-                item.classList.add('items__item--hidden');
-            }
-            burger.classList.add('burger--hidden');
-
-            // Срабатывает, когда нужно скрыть итем.
-            async function hide() {
-                // Показываем бургер (если надо),
-                // Прячем итем в основном навбаре,
-                // Показываем итем в модальном окне.
-
-                let item      = visibleItemsStack.pop();
-                let modalItem = modalHiddenItemsStack.pop();
-
-                modalItem.classList.remove('items__item--hidden');
-                await Promise.all([
-                    playAnimation(item, 'hide_animation'),
-                    playAnimation(modalItem, 'show_animation')
-                ]);
-                item.classList.add('items__item--hidden');
-
-                hiddenItemsStack.push(item);
-                modalVisibleItemsStack.push(modalItem);
-
-                if (hiddenItemsStack.length === 1) {
-                    burger.classList.remove('burger--hidden');
-                    await playAnimation(burger, 'show_animation');
-                }
-            }
-
-            // Срабатывает, когда нужно показать итем.
-            async function show() {
-                // Прячем бургер (если надо),
-                // Показываем итем в основном навбаре,
-                // Прячем итем в модальном окне.
-
-                if (hiddenItemsStack.length === 1) {
-                    await playAnimation(burger, 'hide_animation');
-                    burger.classList.add('burger--hidden');
-                    modal.classList.add('navbar_modal--hidden');
+                    if (change.add) for (const className of change.add) {
+                        elem.classList.add(className);
+                    }
+                    if (change.remove) for (const className of change.remove) {
+                        elem.classList.remove(className);
+                    }
                 }
 
-                let item = hiddenItemsStack.pop();
-                let modalItem = modalVisibleItemsStack.pop();
+                let result = !isOverflow(wrapper);
 
-                item.classList.remove('items__item--hidden');
-                await Promise.all([
-                    playAnimation(item, 'show_animation'),
-                    playAnimation(modalItem, 'hide_animation')
-                ]);
-                modalItem.classList.add('items__item--hidden');
+                for (const change of changeList) {
+                    let elem = change.elem;
 
-                visibleItemsStack.push(item);
-                modalHiddenItemsStack.push(modalItem);
-            }
-
-            // ---------------------------------------------------------------------
-
-            // Мехинизм брейкпоинтов.
-            // Применяется так:
-            // Когда детектится переполнение, кладём в стек ширину контента (scrollWidth).
-            // Когда ширина навбара достигает или превосходит ширину из стека, считается,
-            // что можно показать спрятанный итем.
-            let breakpointsStack = [];
-            function pushBreakpoint() {
-                let contentWidth = itemsWrapper.scrollWidth;
-                breakpointsStack.push(contentWidth);
-            }
-            function popBreakpoint() {
-                breakpointsStack.pop();
-            }
-            
-            function isOverflow() {
-                return itemsWrapper.clientWidth < itemsWrapper.scrollWidth;
-            }
-            function isOverBreakpoint() {
-                if (breakpointsStack.length === 0) return false;
-
-                let breakpointWidth = breakpointsStack.at(-1);
-                let contentWidth = itemsWrapper.clientWidth;
-
-                return contentWidth > breakpointWidth;
-            }
-
-            let observer = new ResizeObserver(throttle(async () => {
-                while(isOverflow()) {
-                    pushBreakpoint();
-                    await hide();
+                    if (change.remove) for (const className of change.remove) {
+                        elem.classList.add(className);
+                    }
+                    if (change.add) for (const className of change.add) {
+                        elem.classList.remove(className);
+                    }
                 }
-                while(isOverBreakpoint()) {
-                    popBreakpoint();
-                    await show();
-                }
-            }, 250));
-            observer.observe(itemsWrapper);
+
+                return result;
+            }
+
+            function initAdaptiveContainer(container, hide, show, getShowChange) {
+                let callback = throttle(async () => {
+                    while(isOverflow(container)) {
+                        await hide();
+                    }
+                    while(canShow(container, getShowChange)) {
+                        await show();
+                    }
+                }, 250);
+
+                let observer = new ResizeObserver(callback);
+                observer.observe(container);
+                setInterval(callback, 1000);
+            }
+
         })();
     </script>
 
