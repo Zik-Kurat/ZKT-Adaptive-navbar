@@ -18,7 +18,7 @@
             <div class="navbar__menu">
 
                 <div class="items">
-                    <div class="items__item">Товары <textarea name="" id=""></textarea></div>
+                    <div class="items__item">Товары</div>
                     <div class="items__item">Услуги</div>
                     <div class="items__item">Обратная связь</div>
                     <div class="items__item">Документы</div>
@@ -234,32 +234,56 @@
 
             
 
-            // Спизженный из интернетов декоратор для троттлинга.
-            // Немного модификирован для асинхронных функций.
-            function throttle(func, delay) {
-                let isThrottled = false;
-                let savedArgs = null;
-                let savedThis = null;
-
-                return async function wrapper(...args) {
-                    if (isThrottled) {
-                        savedArgs = args;
-                        savedThis = this;
-                        return;
+            function onDeleteNode(target, callback) {
+                let observer = new MutationObserver(mutations => {
+                    for (const mutation of mutations) {
+                        for (const node of mutation.removedNodes) {
+                            if (target === node) {
+                                callback();
+                                observer.disconnect();
+                            }
+                        }
                     }
-                    isThrottled = true;
+                });
+                observer.observe(target.parentElement, { childList: true });
+            }
+            function multiLock(funcArray) {
+                let isLock = false;
+                let runQueue = [];
 
-                    await func.apply(this, args);
+                let wrappers = [];
+                for (const func of funcArray) {
+                    let wrapper = async () => {
+                        // Если занято, становимся в очередь.
+                        if (isLock) {
+                            // Если мы уже в очереди, то гуляем дальше.
+                            if (runQueue.find(ticket => ticket.wrapper === wrapper)) return;
 
-                    setTimeout(()=>{
-                        isThrottled = false;
+                            await new Promise(res => {
+                                runQueue.push({ wrapper, res });
+                            });
+                        };
 
-                        if (!savedArgs) return;
-                        wrapper.apply(savedThis, savedArgs);
-                        savedArgs = null;
-                        savedThis = null;
-                    }, delay);
-                };
+                        isLock = true;
+                        await func();
+                        isLock = false;
+
+                        // Когда закончили, пригласили следуюшего.
+                        if (runQueue.length !== 0) {
+                            let ticket = runQueue.shift();
+                            ticket.res();
+                        };
+                    };
+
+                    wrappers.push(wrapper);
+                }
+
+                return wrappers;
+            }
+            async function delay(ms) {
+                return new Promise(res => {
+                    setTimeout(res, ms);
+                });
             }
 
             function isOverflow(wrapper) {
@@ -297,18 +321,42 @@
             }
 
             function initAdaptiveContainer(container, hide, show, getShowChange) {
-                let callback = throttle(async () => {
-                    while(isOverflow(container)) {
-                        await hide();
-                    }
-                    while(canShow(container, getShowChange)) {
-                        await show();
-                    }
-                }, 250);
+                let cancellation = false;
+                onDeleteNode(container, () => {
+                    cancellation = true;
+                });
 
-                let observer = new ResizeObserver(callback);
-                observer.observe(container);
-                setInterval(callback, 1000);
+                let [hideCheck, showCheck] = multiLock([
+                    async () => {
+                        while(isOverflow(container)) {
+                            await hide();
+                        }
+                    },
+                    async () => {
+                        while(canShow(container, getShowChange)) {
+                            await show();
+                        }
+                    }
+                ]);
+
+                (async()=>{
+                    while(true) {
+                        if (cancellation) return;
+
+                        await hideCheck();
+
+                        await delay(250);
+                    }
+                })();
+                (async()=>{
+                    while(true) {
+                        if (cancellation) return;
+
+                        await showCheck();
+
+                        await delay(1000);
+                    }
+                })();
             }
 
         })();
