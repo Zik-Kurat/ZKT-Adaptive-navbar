@@ -26,13 +26,6 @@
  * - Применённые изменения откатываются, и даётся добро на вызов функции show().
  */
 
-/**
- * @typedef {Object} ElemDeltaChange - Список изменений для конкретного HTML-элемента.
- * @property {HTMLElement} elem      - Изменяемый HTML-элемент.
- * @property {string[]}    [add]     - Массив CSS-классов, которые будут добавлены (необязательно).
- * @property {string[]}    [remove]  - Массив CSS-классов, которые будут удалены (необязательно).
-*/
-
 import { delay, multiLock } from './utilities.js';
 
 
@@ -70,6 +63,13 @@ function canShow(wrapper, changeFunc) {
 
     return result;
 }
+
+/**
+ * @typedef  {Object}      ElemDeltaChange - Список изменений для конкретного HTML-элемента.
+ * @property {HTMLElement} elem            - Изменяемый HTML-элемент.
+ * @property {string[]}    [add]           - Массив CSS-классов, которые будут добавлены (необязательно).
+ * @property {string[]}    [remove]        - Массив CSS-классов, которые будут удалены (необязательно).
+*/
 
 /**
  * Инициация адаптивного контейнера.

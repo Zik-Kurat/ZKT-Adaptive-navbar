@@ -8,23 +8,26 @@ export async function delay(ms) {
  * Функция для запуска CSS анимации с ожиданием её конца.
  * 
  * @param   {HTMLElement} element   - Целевой HTML-элемент
- * @param   {string} animClass - CSS-класс с анимацией.
- * @param   {number} [maxTime] - Время гарантированного конца анимации (необязательно).
+ * @param   {string}      animClass - CSS-класс с анимацией.
+ * @param   {number}      [maxTime] - Время гарантированного конца анимации (необязательно).
  * @returns {Promise<void>}
  */
 export async function playAnimation(element, animClass, maxTime = 500) {
-    if (element.clientWidth === 0) return;
-
+    // Отсеиваем те анимации, которые были справоцированны добавленным классом.
+    // Далее будем ждать конца именно наших анимаций.
+    let beforeAnims = element.getAnimations({ subtree: true });
     element.classList.add(animClass);
+    let aftetAnims = element.getAnimations({ subtree: true });
+    let myAnims = aftetAnims.filter(anim => !beforeAnims.includes(anim));
+
+    if (myAnims.length === 0) {
+        element.classList.remove(animClass);
+        return;
+    }
+
     await Promise.race([
-            new Promise(res => {
-            element.addEventListener('animationend', ()=>{
-                res();
-            }, { once: true });
-        }),
-        new Promise(res => {
-            setTimeout(res, maxTime)
-        }),
+        Promise.all(myAnims.map(anim => anim.finished)),
+        new Promise(res => setTimeout(res, maxTime))
     ]);
     element.classList.remove(animClass);
 }
